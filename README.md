@@ -9,11 +9,13 @@ A Home Assistant custom integration that imports a remote iCalendar (`.ics`) fee
 
 ## Installation
 
-After installing the integration using either method below and restarting Home Assistant, click this button to open its setup flow:
-
-[![Add to Home Assistant](https://my.home-assistant.io/badges/config_flow.svg)](https://my.home-assistant.io/redirect/config_flow/?domain=ha_remote_calendar_retain)
-
 ### HACS
+
+Open this repository in HACS:
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Simon7381&repository=ha_remote_calendar_retain&category=integration)
+
+Alternatively, add the repository manually:
 
 1. In HACS, open **Custom repositories** from the menu.
 2. Add `https://github.com/Simon7381/ha_remote_calendar_retain` with type **Integration**.
