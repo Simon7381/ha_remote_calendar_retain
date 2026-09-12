@@ -1,0 +1,19 @@
+{
+  "domain": "ha_remote_calendar_retain",
+  "name": "Remote Calendar Retain",
+  "codeowners": [
+    "@Simon7381"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/Simon7381/ha_remote_calendar_retain",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "loggers": [
+    "ical"
+  ],
+  "requirements": [
+    "ical==14.1.1"
+  ],
+  "issue_tracker": "https://github.com/Simon7381/ha_remote_calendar_retain/issues",
+  "version": "1.0.0"
+}

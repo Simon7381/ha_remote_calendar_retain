@@ -1,0 +1,16 @@
+Remote Calendar Retain
+
+This project includes code adapted from Home Assistant Core's remote_calendar
+integration, retrieved from the dev branch on 2026-09-12:
+https://github.com/home-assistant/core/tree/dev/homeassistant/components/remote_calendar
+
+Home Assistant Core is distributed under the Apache License, Version 2.0.
+Copyright belongs to the Home Assistant contributors.
+
+Modified files include __init__.py, const.py, coordinator.py, config_flow.py,
+manifest.json, and strings.json. Changes add a separate integration identity,
+persistent event retention, configuration editing, and custom integration metadata.
+
+Calendar parsing, HTTP fetching, and calendar entity behavior are derived from
+the upstream implementation. Additional files implement retention, translations,
+documentation, packaging, and tests for Remote Calendar Retain.

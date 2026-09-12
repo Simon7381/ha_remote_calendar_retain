@@ -1,0 +1,107 @@
+{
+  "title": "Remote Calendar Retain",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Remote Calendar Retain",
+        "description": "Configure the remote iCalendar feed. Disabling retention discards stored history after the next successful refresh.",
+        "data": {
+          "calendar_name": "Calendar name",
+          "url": "Calendar URL",
+          "retain_events": "Retain started and imminent events",
+          "verify_ssl": "Verify SSL certificate",
+          "username": "Username",
+          "password": "Password"
+        },
+        "data_description": {
+          "calendar_name": "The calendar name shown in Home Assistant.",
+          "url": "An HTTP, HTTPS or webcal iCalendar feed URL.",
+          "retain_events": "Keep deleted or cancelled events that started or start in less than one minute when a refresh detects the deletion. History survives restarts.",
+          "verify_ssl": "Validate the remote server certificate.",
+          "username": "Optional HTTP Basic Authentication username. Clear both credential fields to remove authentication.",
+          "password": "Optional HTTP Basic Authentication password."
+        }
+      },
+      "reconfigure": {
+        "title": "Remote Calendar Retain",
+        "description": "Configure the remote iCalendar feed. Disabling retention discards stored history after the next successful refresh.",
+        "data": {
+          "calendar_name": "Calendar name",
+          "url": "Calendar URL",
+          "retain_events": "Retain started and imminent events",
+          "verify_ssl": "Verify SSL certificate",
+          "username": "Username",
+          "password": "Password"
+        },
+        "data_description": {
+          "calendar_name": "The calendar name shown in Home Assistant.",
+          "url": "An HTTP, HTTPS or webcal iCalendar feed URL.",
+          "retain_events": "Keep deleted or cancelled events that started or start in less than one minute when a refresh detects the deletion. History survives restarts.",
+          "verify_ssl": "Validate the remote server certificate.",
+          "username": "Optional HTTP Basic Authentication username. Clear both credential fields to remove authentication.",
+          "password": "Optional HTTP Basic Authentication password."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to the remote calendar.",
+      "forbidden": "The server refused access to this calendar.",
+      "invalid_auth": "Authentication failed. Check the username and password.",
+      "invalid_ics_file": "The remote calendar feed contains invalid iCalendar data.",
+      "timeout_connect": "The connection timed out.",
+      "invalid_url": "Enter an HTTP, HTTPS or webcal URL.",
+      "required": "Enter a calendar name."
+    },
+    "abort": {
+      "already_configured": "A calendar with this name or URL is already configured.",
+      "reconfigure_successful": "Calendar settings updated."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Remote Calendar Retain",
+        "description": "Configure the remote iCalendar feed. Disabling retention discards stored history after the next successful refresh.",
+        "data": {
+          "calendar_name": "Calendar name",
+          "url": "Calendar URL",
+          "retain_events": "Retain started and imminent events",
+          "verify_ssl": "Verify SSL certificate",
+          "username": "Username",
+          "password": "Password"
+        },
+        "data_description": {
+          "calendar_name": "The calendar name shown in Home Assistant.",
+          "url": "An HTTP, HTTPS or webcal iCalendar feed URL.",
+          "retain_events": "Keep deleted or cancelled events that started or start in less than one minute when a refresh detects the deletion. History survives restarts.",
+          "verify_ssl": "Validate the remote server certificate.",
+          "username": "Optional HTTP Basic Authentication username. Clear both credential fields to remove authentication.",
+          "password": "Optional HTTP Basic Authentication password."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to the remote calendar.",
+      "forbidden": "The server refused access to this calendar.",
+      "invalid_auth": "Authentication failed. Check the username and password.",
+      "invalid_ics_file": "The remote calendar feed contains invalid iCalendar data.",
+      "timeout_connect": "The connection timed out.",
+      "invalid_url": "Enter an HTTP, HTTPS or webcal URL.",
+      "required": "Enter a calendar name."
+    },
+    "abort": {
+      "already_configured": "A calendar with this name or URL is already configured."
+    }
+  },
+  "exceptions": {
+    "timeout": {
+      "message": "The connection timed out."
+    },
+    "unable_to_fetch": {
+      "message": "Unable to fetch the remote calendar."
+    },
+    "unable_to_parse": {
+      "message": "The remote calendar feed contains invalid iCalendar data."
+    }
+  }
+}
