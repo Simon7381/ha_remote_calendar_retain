@@ -1,5 +1,7 @@
 # Remote Calendar Retain
 
+<img src="custom_components/ha_remote_calendar_retain/brand/icon@2x.png" alt="Remote Calendar Retain: a blue calendar with a brain" width="128" height="128">
+
 A Home Assistant custom integration that imports a remote iCalendar (`.ics`) feed and can retain events that the provider removes after they start. It is based on Home Assistant's [Remote Calendar integration](https://github.com/home-assistant/core/tree/dev/homeassistant/components/remote_calendar).
 
 - **Integration name:** Remote Calendar Retain
@@ -29,6 +31,8 @@ Alternatively, add the repository manually:
 3. Add **Remote Calendar Retain** under **Settings → Devices & services**.
 
 This creates a separate calendar entity. It can coexist with the built-in Remote Calendar integration. Existing built-in entries and their entity IDs are not automatically migrated; update dashboards and automations to use the new calendar entity as needed.
+
+The integration includes its calendar-and-brain icon in the `brand` folder, using Home Assistant's [local brand image support](https://developers.home-assistant.io/docs/core/integration/brand_images/). After updating an existing installation, restart Home Assistant and refresh the browser to load the new icon.
 
 ## Configuration
 
