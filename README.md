@@ -79,6 +79,8 @@ The calendar is read-only. Retention changes the calendar Home Assistant exposes
 
 ## Change the URL or settings
 
+If a provider reports `"type":"SubscriptionNotFound"` (for example, when a Mindbody subscription expires), the integration creates an error under **Settings → System → Repairs** (`/config/repairs`). The repair identifies the integration instance by name and shows the provider's error. Obtain a replacement subscription URL and update the existing entry using the steps below. The repair clears after a successful refresh or when the entry is removed. Failed refreshes leave retained history intact.
+
 1. Go to **Settings → Devices & services → Remote Calendar Retain**.
 2. Select the calendar's **Configure / settings cog**, or choose **Reconfigure** from its entry menu. The exact label and placement depend on your Home Assistant frontend version.
 3. Update the URL, retention checkbox, name or authentication settings and submit.

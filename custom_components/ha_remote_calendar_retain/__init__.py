@@ -4,9 +4,10 @@ import logging
 
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.storage import Store
 
-from .const import DOMAIN, STORAGE_VERSION
+from .const import DOMAIN, ISSUE_SUBSCRIPTION_NOT_FOUND, STORAGE_VERSION
 from .coordinator import RemoteCalendarConfigEntry, RemoteCalendarDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -36,5 +37,8 @@ async def async_unload_entry(
 async def async_remove_entry(
     hass: HomeAssistant, entry: RemoteCalendarConfigEntry
 ) -> None:
-    """Remove the stored history when the user deletes the integration entry."""
+    """Remove stored history and repairs when the user deletes the entry."""
+    ir.async_delete_issue(
+        hass, DOMAIN, f"{ISSUE_SUBSCRIPTION_NOT_FOUND}_{entry.entry_id}"
+    )
     await Store(hass, STORAGE_VERSION, f"{DOMAIN}.{entry.entry_id}").async_remove()

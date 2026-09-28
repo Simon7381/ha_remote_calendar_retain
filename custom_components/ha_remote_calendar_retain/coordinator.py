@@ -7,6 +7,7 @@ from typing import override
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_URL, CONF_USERNAME, CONF_VERIFY_SSL
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.httpx_client import get_async_client
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -16,7 +17,12 @@ from ical.calendar import Calendar
 from ical.calendar_stream import IcsCalendarStream
 
 from .client import get_calendar
-from .const import CONF_RETAIN_EVENTS, DOMAIN, STORAGE_VERSION
+from .const import (
+    CONF_RETAIN_EVENTS,
+    DOMAIN,
+    ISSUE_SUBSCRIPTION_NOT_FOUND,
+    STORAGE_VERSION,
+)
 from .ics import InvalidIcsException, parse_calendar
 from .retention import merge_calendar
 
@@ -70,6 +76,30 @@ class RemoteCalendarDataUpdateCoordinator(DataUpdateCoordinator[Calendar]):
                 username=self._username,
                 password=self._password,
             )
+            # Providers can return this JSON error with either an HTTP error
+            # status or 200, and without a reliable Content-Type header.
+            try:
+                problem = res.json()
+            except ValueError:
+                problem = None
+            if (
+                isinstance(problem, dict)
+                and problem.get("type") == "SubscriptionNotFound"
+            ):
+                ir.async_create_issue(
+                    self.hass,
+                    DOMAIN,
+                    f"{ISSUE_SUBSCRIPTION_NOT_FOUND}_{self.config_entry.entry_id}",
+                    is_fixable=False,
+                    severity=ir.IssueSeverity.ERROR,
+                    translation_key=ISSUE_SUBSCRIPTION_NOT_FOUND,
+                    translation_placeholders={"name": self.config_entry.title},
+                )
+                raise UpdateFailed(
+                    translation_domain=DOMAIN,
+                    translation_key=ISSUE_SUBSCRIPTION_NOT_FOUND,
+                    translation_placeholders={"name": self.config_entry.title},
+                )
             res.raise_for_status()
         except TimeoutException as err:
             raise UpdateFailed(
@@ -104,4 +134,9 @@ class RemoteCalendarDataUpdateCoordinator(DataUpdateCoordinator[Calendar]):
         else:
             await self._store.async_remove()
         self._calendar = calendar
+        ir.async_delete_issue(
+            self.hass,
+            DOMAIN,
+            f"{ISSUE_SUBSCRIPTION_NOT_FOUND}_{self.config_entry.entry_id}",
+        )
         return calendar

@@ -93,7 +93,16 @@
       "already_configured": "A calendar with this name or URL is already configured."
     }
   },
+  "issues": {
+    "subscription_not_found": {
+      "title": "{name}: calendar subscription not reporting data",
+      "description": "The remote calendar subscription for integration instance \"{name}\" is not reporting data. The provider returned `\"type\":\"SubscriptionNotFound\"`.\n\nThe subscription may have expired or been removed by the provider. Obtain a new calendar subscription URL from your provider, then open Settings > Devices & services > Remote Calendar Retain and configure or reconfigure \"{name}\" to replace its Calendar URL.\n\nThis repair will clear automatically after the calendar refreshes successfully."
+    }
+  },
   "exceptions": {
+    "subscription_not_found": {
+      "message": "The calendar subscription for \"{name}\" is not reporting data: \"type\":\"SubscriptionNotFound\"."
+    },
     "timeout": {
       "message": "The connection timed out."
     },

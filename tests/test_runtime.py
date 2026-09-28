@@ -3,6 +3,7 @@
 These tests do not boot Home Assistant; installation/UI verification is separate.
 """
 
+import json
 import sys
 from datetime import UTC, datetime, timedelta
 from types import ModuleType, SimpleNamespace
@@ -10,7 +11,7 @@ from unittest.mock import AsyncMock, Mock
 
 import httpx
 import pytest
-from conftest import load_module
+from conftest import PACKAGE_PATH, load_module
 from ical.calendar import Calendar
 from ical.calendar_stream import IcsCalendarStream
 from ical.event import Event
@@ -79,6 +80,7 @@ def host(monkeypatch):
     class UpdateFailed(Exception):
         def __init__(self, **kwargs):
             self.translation_key = kwargs["translation_key"]
+            self.translation_placeholders = kwargs.get("translation_placeholders")
 
     class Store:
         values = {}
@@ -116,6 +118,17 @@ def host(monkeypatch):
     )
     module("homeassistant.core", HomeAssistant=object, callback=lambda f: f)
     module("homeassistant.helpers")
+    issues = {}
+    module(
+        "homeassistant.helpers.issue_registry",
+        IssueSeverity=SimpleNamespace(ERROR="error"),
+        async_create_issue=lambda hass, domain, issue_id, **kwargs: issues.update(
+            {(domain, issue_id): kwargs}
+        ),
+        async_delete_issue=lambda hass, domain, issue_id: issues.pop(
+            (domain, issue_id), None
+        ),
+    )
     module(
         "homeassistant.helpers.httpx_client", get_async_client=lambda *a, **kw: object()
     )
@@ -140,7 +153,9 @@ def host(monkeypatch):
         entries=[],
     )
     entry = SimpleNamespace(entry_id="stable-id", title="Test", data=dict(SETTINGS))
-    return SimpleNamespace(hass=hass, entry=entry, store=Store, error=UpdateFailed)
+    return SimpleNamespace(
+        hass=hass, entry=entry, store=Store, error=UpdateFailed, issues=issues
+    )
 
 
 def response(calendar=None, status=200, text=None):
@@ -222,6 +237,111 @@ async def test_failed_updates_do_not_change_snapshot(host, monkeypatch, failure)
         await coordinator._async_update_data()
     assert coordinator._calendar is previous
     assert host.store.values == saved
+
+
+@pytest.mark.parametrize("status", [200, 404, 410])
+@pytest.mark.parametrize("retain", [False, True])
+async def test_subscription_repair_preserves_history_and_clears_on_recovery(
+    host, monkeypatch, status, retain
+):
+    mod = load_module("coordinator")
+    host.entry.data["retain_events"] = retain
+    host.entry.title = "My renamed calendar"
+    fetch = AsyncMock(return_value=response(calendar()))
+    monkeypatch.setattr(mod, "get_calendar", fetch)
+    coordinator = mod.RemoteCalendarDataUpdateCoordinator(host.hass, host.entry)
+    await coordinator._async_update_data()
+    previous = coordinator._calendar
+    saved = dict(host.store.values)
+    fetch.return_value = response(
+        status=status,
+        text='{"type":"SubscriptionNotFound","title":"Subscription not found."}',
+    )
+    for _ in range(2):
+        with pytest.raises(host.error) as err:
+            await coordinator._async_update_data()
+        assert err.value.translation_key == "subscription_not_found"
+        assert err.value.translation_placeholders == {"name": host.entry.title}
+    assert coordinator._calendar is previous
+    assert host.store.values == saved
+    assert len(host.issues) == 1
+    issue = host.issues[(mod.DOMAIN, "subscription_not_found_stable-id")]
+    assert issue["translation_key"] == "subscription_not_found"
+    assert issue["translation_placeholders"] == {"name": host.entry.title}
+    assert issue["severity"] == "error"
+    assert issue["is_fixable"] is False
+
+    # A different failure is not evidence that the subscription recovered.
+    fetch.return_value = response(text="invalid calendar")
+    with pytest.raises(host.error):
+        await coordinator._async_update_data()
+    assert len(host.issues) == 1
+    fetch.return_value = response()
+    await coordinator._async_update_data()
+    assert not host.issues
+    assert bool(coordinator._calendar.events) == retain
+
+
+@pytest.mark.parametrize(
+    "text,status,error",
+    [
+        ('{"type":"OtherError"}', 404, "unable_to_fetch"),
+        ("SubscriptionNotFound", 404, "unable_to_fetch"),
+        ('{"type":', 200, "unable_to_parse"),
+        ('["SubscriptionNotFound"]', 200, "unable_to_parse"),
+        ('"SubscriptionNotFound"', 200, "unable_to_parse"),
+        ("null", 200, "unable_to_parse"),
+    ],
+)
+async def test_other_responses_do_not_create_subscription_repair(
+    host, monkeypatch, text, status, error
+):
+    mod = load_module("coordinator")
+    monkeypatch.setattr(
+        mod, "get_calendar", AsyncMock(return_value=response(text=text, status=status))
+    )
+    coordinator = mod.RemoteCalendarDataUpdateCoordinator(host.hass, host.entry)
+    with pytest.raises(host.error) as err:
+        await coordinator._async_update_data()
+    assert err.value.translation_key == error
+    assert not host.issues
+
+
+async def test_subscription_repairs_are_independent_and_removed_with_entry(
+    host, monkeypatch
+):
+    mod = load_module("coordinator")
+    fetch = AsyncMock(
+        return_value=response(status=404, text='{"type":"SubscriptionNotFound"}')
+    )
+    monkeypatch.setattr(mod, "get_calendar", fetch)
+    other_entry = SimpleNamespace(
+        entry_id="other-id", title="Other calendar", data=dict(SETTINGS)
+    )
+    for entry in (host.entry, other_entry):
+        # Also covers detecting the issue on first refresh without a snapshot.
+        coordinator = mod.RemoteCalendarDataUpdateCoordinator(host.hass, entry)
+        await coordinator._async_setup()
+        with pytest.raises(host.error):
+            await coordinator._async_update_data()
+    assert len(host.issues) == 2
+    fetch.return_value = response()
+    await coordinator._async_update_data()
+    assert list(host.issues) == [(mod.DOMAIN, "subscription_not_found_stable-id")]
+    init = load_module("__init__")
+    await init.async_remove_entry(host.hass, host.entry)
+    assert not host.issues
+
+
+def test_subscription_repair_translations():
+    strings = json.loads((PACKAGE_PATH / "strings.json").read_text())
+    english = json.loads((PACKAGE_PATH / "translations" / "en.json").read_text())
+    assert strings == english
+    issue = strings["issues"]["subscription_not_found"]
+    assert "My calendar" in issue["title"].format(name="My calendar")
+    description = issue["description"].format(name="My calendar")
+    assert "My calendar" in description
+    assert '"type":"SubscriptionNotFound"' in description
 
 
 async def test_disabling_retention_clears_history_on_success(host, monkeypatch):
